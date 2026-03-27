@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register - BridgeCare</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        .register-card { width: 100%; max-width: 450px; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); background: white; border-top: 5px solid #0dcaf0; }
+    </style>
+</head>
+<body>
+
+<div class="register-card">
+    <h3 class="text-center text-dark fw-bold mb-2">Join BridgeCare</h3>
+    <p class="text-center text-muted mb-4">Create your account to get started.</p>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} py-2">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="/register">
+        <div class="mb-3">
+            <label class="form-label fw-bold text-secondary">Choose a Username</label>
+            <input type="text" name="username" class="form-control bg-light" required placeholder="e.g. JohnDoe">
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label fw-bold text-secondary">Create a Password</label>
+            <input type="password" name="password" class="form-control bg-light" required placeholder="••••••••">
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label fw-bold text-secondary">I am a...</label>
+            <select name="role" class="form-select bg-light" required>
+                <option value="" disabled selected>Select your role</option>
+                <option value="Patient">Patient (Looking for care)</option>
+                <option value="Doctor">Doctor (Providing care)</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-info w-100 text-white fw-bold fs-5">Create Account</button>
+    </form>
+    
+    <div class="text-center mt-4">
+        <span class="text-muted">Already have an account?</span> 
+        <a href="/login" class="text-info fw-bold text-decoration-none">Log in here</a>
+    </div>
+</div>
+
+</body>
+</html>
