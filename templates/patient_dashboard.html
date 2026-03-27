@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Patient Portal - BridgeCare</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .card { transition: transform 0.2s, box-shadow 0.2s; border-radius: 12px; border: none; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        .med-done { text-decoration: line-through; color: #adb5bd; transition: all 0.3s ease; }
+        .queue-box { background-color: #f8f9fa; border-left: 5px solid #0dcaf0; padding: 15px; border-radius: 5px; }
+    </style>
+</head>
+<body class="bg-light" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">🏥 BridgeCare Patient Portal</a>
+            <div class="d-flex align-items-center">
+                <span class="text-white me-3">User: <strong>{{ current_user }}</strong></span>
+                <a href="/logout" class="btn btn-sm btn-outline-light rounded-pill px-3">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h2 class="mb-4 text-dark">Welcome back, {{ current_user }}! 👋</h2>
+        
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                        <h5 class="text-primary fw-bold"><i class="bi bi-activity"></i> Current Medical Status</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if record %}
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="text-muted">Reported Symptom:</span>
+                                <span class="badge bg-danger fs-6 px-3 py-2 rounded-pill shadow-sm">{{ record['symptom'] }}</span>
+                            </div>
+                            <div class="alert alert-success bg-opacity-10 border-success border-opacity-25" role="alert">
+                                👨‍⚕️ Your symptoms have been routed to the appropriate specialist via the Analytics Engine.
+                            </div>
+                        {% else %}
+                            <p class="text-muted">No active symptoms reported.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                        <h5 class="text-success fw-bold">Daily Prescriptions</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">Check off your medicines as you take them.</p>
+                        
+                        <div class="form-check mb-3 p-3 bg-white border rounded shadow-sm d-flex align-items-center">
+                            <input class="form-check-input fs-4 me-3" type="checkbox" id="med1" onchange="toggleMed(this, 'medText1', 'badge1')">
+                            <div class="flex-grow-1">
+                                <label class="form-check-label fw-bold d-block" id="medText1" for="med1">Paracetamol 500mg</label>
+                                <small class="text-muted">Take after breakfast</small>
+                            </div>
+                            <span class="badge bg-warning text-dark rounded-pill" id="badge1">Pending</span>
+                        </div>
+
+                        <div class="form-check p-3 bg-white border rounded shadow-sm d-flex align-items-center">
+                            <input class="form-check-input fs-4 me-3" type="checkbox" id="med2" onchange="toggleMed(this, 'medText2', 'badge2')">
+                            <div class="flex-grow-1">
+                                <label class="form-check-label fw-bold d-block" id="medText2" for="med2">Amoxicillin 250mg</label>
+                                <small class="text-muted">Take after dinner</small>
+                            </div>
+                            <span class="badge bg-warning text-dark rounded-pill" id="badge2">Pending</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100 border-0" style="background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);">
+                    <div class="card-body text-center d-flex flex-column justify-content-center p-5">
+                        <div class="mb-4">
+                            <h3 class="text-info fw-bold">Lab & Diagnostics</h3>
+                            <p class="text-muted">Need a blood test or X-Ray? Join the Smart Queue to get your live wait time powered by the BridgeCare Engine.</p>
+                        </div>
+                        
+                        <div id="queueArea">
+                            <select class="form-select mb-3 shadow-sm" id="testType">
+                                <option value="Blood Test">Blood Test</option>
+                                <option value="X-Ray">X-Ray</option>
+                                <option value="MRI">MRI Scan</option>
+                            </select>
+                            <button class="btn btn-info btn-lg text-white w-100 shadow-sm rounded-pill fw-bold" id="queueBtn" onclick="joinQueue()">
+                                Request Lab Slot
+                            </button>
+                        </div>
+
+                        <div id="ticketArea" class="mt-4 d-none queue-box text-start shadow-sm">
+                            <h5 class="text-dark fw-bold mb-1">🎟️ Virtual Ticket Generated</h5>
+                            <p class="mb-1">Test: <strong id="ticketTest" class="text-info"></strong></p>
+                            <p class="mb-0">Estimated Wait: <strong class="text-danger fs-5">15 mins</strong></p>
+                            <small class="text-muted mt-2 d-block">*Please head to the waiting area.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Logic for the Medicine Checkboxes
+        function toggleMed(checkbox, textId, badgeId) {
+            const textElement = document.getElementById(textId);
+            const badgeElement = document.getElementById(badgeId);
+            
+            if (checkbox.checked) {
+                textElement.classList.add('med-done');
+                badgeElement.className = 'badge bg-success rounded-pill';
+                badgeElement.innerText = 'Taken ✅';
+            } else {
+                textElement.classList.remove('med-done');
+                badgeElement.className = 'badge bg-warning text-dark rounded-pill';
+                badgeElement.innerText = 'Pending';
+            }
+        }
+
+        // Logic for the Lab Queue Button
+        function joinQueue() {
+            const btn = document.getElementById('queueBtn');
+            const testType = document.getElementById('testType').value;
+            const ticketArea = document.getElementById('ticketArea');
+            const ticketTest = document.getElementById('ticketTest');
+
+            // Simulate a loading state
+            btn.innerHTML = 'Connecting to Smart Queue...';
+            btn.classList.add('disabled');
+
+            // Wait 1.5 seconds, then show the ticket
+            setTimeout(() => {
+                document.getElementById('queueArea').classList.add('d-none');
+                ticketTest.innerText = testType;
+                ticketArea.classList.remove('d-none');
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
