@@ -32,7 +32,6 @@ def register():
         existing_user = conn.execute('SELECT * FROM Users WHERE username = ?', (username,)).fetchone()
         
         if existing_user:
-            from flask import flash # Make sure flash is imported at the top of your file!
             flash('That username is already taken! Try another one.', 'danger')
         else:
             # Save the brand new user to the database!
@@ -40,9 +39,7 @@ def register():
             conn.commit()
             conn.close()
             
-            from flask import flash
             flash('Account created successfully! You can now log in.', 'success')
-            from flask import redirect, url_for
             return redirect(url_for('login'))
             
         conn.close()
@@ -63,20 +60,17 @@ def login():
         
         if user:
             # Login successful! Save their identity in the session
-            from flask import session, redirect, url_for
             session['user_id'] = user['id']
             session['username'] = user['username']
             session['role'] = user['role']
             return redirect(url_for('dashboard'))
         else:
-            from flask import flash
             flash('Invalid credentials. Please try again!', 'danger')
             
     return render_template('login.html')
 
 @app.route('/logout')
 def logout():
-    from flask import session, redirect, url_for
     session.clear() # Wipe the session clean
     return redirect(url_for('login'))
 
